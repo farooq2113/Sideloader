@@ -15,7 +15,7 @@
         "slf4d": "~>2"
     },
     "dflags-ldc": [
-        "--link-defaultlib-shared=false"
+        "--link-defaultlib-shared=true"
     ],
 
     "dflags-gdc": [
