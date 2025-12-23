@@ -28,7 +28,7 @@ jobs:
 
     name: Build CLI for ${{ matrix.triple }}
 
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.target == 'macos' && 'macos-14' || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@v3
         with:
