@@ -13,8 +13,26 @@ runs:
       run: |
         mkdir -p $HOME/.ldc/
         LDC_VERSION=$(ldc2 --version | head -n 1 | grep -oE "[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*")
-        curl -LO https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.0.sdk.tar.xz
-        tar -xf ./MacOSX11.0.sdk.tar.xz -C $HOME
+        # Use macOS 14.0 SDK (newer, compatible with Tahoe 26.2)
+        curl -LO https://github.com/phracker/MacOSX-SDKs/releases/download/14.4/MacOSX14.4.sdk.tar.xz || \
+        curl -LO https://github.com/phracker/MacOSX-SDKs/releases/download/14.0/MacOSX14.0.sdk.tar.xz || \
+        curl -LO https://github.com/phracker/MacOSX-SDKs/releases/download/13.3/MacOSX13.3.sdk.tar.xz
+        # Extract the SDK (handle different naming)
+        if [ -f MacOSX14.4.sdk.tar.xz ]; then
+          tar -xf ./MacOSX14.4.sdk.tar.xz -C $HOME
+          SDK_PATH="$HOME/MacOSX14.4.sdk"
+        elif [ -f MacOSX14.0.sdk.tar.xz ]; then
+          tar -xf ./MacOSX14.0.sdk.tar.xz -C $HOME
+          SDK_PATH="$HOME/MacOSX14.0.sdk"
+        elif [ -f MacOSX13.3.sdk.tar.xz ]; then
+          tar -xf ./MacOSX13.3.sdk.tar.xz -C $HOME
+          SDK_PATH="$HOME/MacOSX13.3.sdk"
+        else
+          echo "Failed to download SDK, falling back to 11.0"
+          curl -LO https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.0.sdk.tar.xz
+          tar -xf ./MacOSX11.0.sdk.tar.xz -C $HOME
+          SDK_PATH="$HOME/MacOSX11.0.sdk"
+        fi
         cp $(dirname $(which ldc2))/../etc/ldc2.conf $HOME/.ldc/ldc2.conf
         cat << EOF | tee $HOME/.ldc/ldc2.conf
         "arm64-apple-macos":
@@ -26,13 +44,13 @@ runs:
                 "-Xcc=-target",
                 "-Xcc=arm64-apple-macos",
                 "-Xcc=-isysroot",
-                "-Xcc=$HOME/MacOSX11.0.sdk",
+                "-Xcc=$SDK_PATH",
                 "-Xcc=-F",
                 "-Xcc=$HOME/ldc2-$LDC_VERSION-osx-arm64/lib",
-                "-Xcc=-mmacosx-version-min=12.6",
+                "-Xcc=-mmacosx-version-min=14.0",
                 "-L=-platform_version",
                 "-L=macos",
-                "-L=12.6.0",
+                "-L=14.0.0",
                 "-L=0.0.0",
                 "-defaultlib=phobos2-ldc,druntime-ldc",
             ];
